@@ -5,7 +5,8 @@ import { AiOutlineMail } from 'react-icons/ai';
 import { BsFillPersonLinesFill } from 'react-icons/bs';
 import { FaGithub, FaLinkedinIn } from 'react-icons/fa';
 import { HiOutlineChevronDoubleUp } from 'react-icons/hi';
-import ContactImg from '../public/assets/contact.jpg';
+import { motion } from 'framer-motion';
+
 
 const Contact = () => {
   return (
@@ -20,11 +21,7 @@ const Contact = () => {
           <div className='col-span-3 lg:col-span-2 w-full h-full shadow-xl shadow-gray-400 rounded-xl p-4'>
             <div className='lg:p-4 h-full '>
               <div>
-                <Image
-                  className='rounded-xl hover:scale-105 ease-in duration-300'
-                  src={ContactImg}
-                  alt='/'
-                />
+                
               </div>
               <div>
                 <h2 className='py-2'>Thierry Jones</h2>
@@ -37,7 +34,7 @@ const Contact = () => {
                 <p className='uppercase pt-8'>Connect With Me</p>
                 <div className='flex items-center justify-between py-4'>
                   <a
-                    href='https://www.linkedin.com/in/clint-briley-50056920a/'
+                    href='https://www.linkedin.com/in/thierry-jones-5106a6172/'
                     target='_blank'
                     rel='noreferrer'
                   >
@@ -46,7 +43,7 @@ const Contact = () => {
                     </div>
                   </a>
                   <a
-                    href='https://github.com/fireclint'
+                    href='https://github.com/ThierryJones21'
                     target='_blank'
                     rel='noreferrer'
                   >
@@ -54,10 +51,15 @@ const Contact = () => {
                       <FaGithub />
                     </div>
                   </a>
-
+                  <a
+                    href='mailto:jones.thierry@gmail.com?subject=Resume-Contact'
+                    target='_blank'
+                    rel='noreferrer'
+                  >
                   <div className='rounded-full shadow-lg shadow-gray-400 p-6 cursor-pointer hover:scale-110 ease-in duration-300'>
                     <AiOutlineMail />
                   </div>
+                  </a>
                   <Link href='/resume'>
                     <a>
                       <div className='rounded-full shadow-lg shadow-gray-400 p-6 cursor-pointer hover:scale-110 ease-in duration-300'>
@@ -67,6 +69,25 @@ const Contact = () => {
                   </Link>
                 </div>
               </div>
+              <motion.div className="card p-6" whileHover={{
+                  position: 'relative',
+                  zIndex: 1,
+                  background: 'white',
+                  scale: [1, 1.1, 1.1],
+                  rotate: [0, 10, -10, 0],
+                  transition: {
+                    duration: .2
+                  }
+                }}>
+
+
+              <Image
+                  src="/assets/full-stack.jpg"
+                  width={2000}
+                  height={1250}
+                  alt="Picture of the author"
+                />
+              </motion.div>
             </div>
           </div>
 
@@ -74,7 +95,7 @@ const Contact = () => {
           <div className='col-span-3 w-full h-auto shadow-xl shadow-gray-400 rounded-xl lg:p-4'>
             <div className='p-4'>
               <form
-                action='https://getform.io/f/08ebcd37-f5b5-45be-8c13-714f011ce060'
+                action='https://getform.io/f/0574f96f-fa5d-4942-b7e1-58d6cd3748f8'
                 method='POST'
                 encType='multipart/form-data'
               >
