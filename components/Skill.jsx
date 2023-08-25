@@ -3,6 +3,7 @@ import {motion} from "framer-motion"
 import Link from 'next/link'
 const Skill = ({name, x, y}) => {
     return(
+        // motion progress bar with level of proficiency, new, proficient, mastered
       <motion.div className='flex items-center justify-center rounded-full font-semibold bg-dark text-light
                 py-3 px6 p-4 shawdow-dark cursor-pointer absolute'
                 whileHover={{scale:1.05}}
