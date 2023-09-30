@@ -94,6 +94,31 @@ const resume = () => {
           Professional Experience
         </h5>
         {/* Experience */}
+        {/* Proxi.id */}
+        <div className='py-6'>
+          <p className='italic'>
+            <span className='font-bold italic'>
+            Proxi.ID
+            </span>
+            <span className='px-2'>|</span>Ottawa, ON
+          </p>
+          <p className='py-1 italic'>End User Support Specialist (2023 - Current)</p>
+          <ul className='list-disc list-outside px-7 py-1 leading-relaxed'>
+            <li>
+              Created flows to automate dashboards and tools for Product Support engineers and managers
+            </li>
+            <li>
+              Designed, built, and maintained a website in collaboration with the Ericsson Response humanitarian emergency relief program. 
+            </li>
+            <li>
+            Encrypted VPN data to help keep employee’s and volunteers’ connection secure in any situation or part of the world.
+            </li>
+            <li>
+            Team leader of new co-ops hired in September 2022.
+            </li>
+          </ul>
+        </div>
+        {/* Experience */}
         {/* Ericsson */}
         <div className='py-6'>
           <p className='italic'>
