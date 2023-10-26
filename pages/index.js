@@ -13,7 +13,7 @@ export default function Home() {
       "logo": "https://www.thierryjones.ca/Logo.png",
       "url": "https://www.thierryjones.ca",
       "sameAs": [
-        "https://www.linkedin.com/in/thierry-jones-5106a6172/,
+        "https://www.linkedin.com/in/thierry-jones-5106a6172/",
         "https://github.com/ThierryJones21"
       ]
     }
