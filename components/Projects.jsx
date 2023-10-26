@@ -1,9 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
-import ProjectItem from './ProjectItem';
 
-const Projects = () => {
+const Projects = ({ project_url }) => {
   return (
     <div id='projects' className='w-full'>
       <div className='max-w-[1240px] mx-auto px-2 py-16'>
@@ -12,33 +11,34 @@ const Projects = () => {
         </p>
         <h2 className='py-4'>What I&apos;ve Built</h2>
         <div className='grid md:grid-cols-2 gap-8'>
-          <ProjectItem
-            title='Property Finder'
-            projectUrl='/property'
-            tech='React JS'
-          />
-          <ProjectItem
-            title='Crypto App'
-            projectUrl='/crypto'
-            tech='React JS'
-
-          />
-          <ProjectItem
-            title='Netflix App'
-            projectUrl='/netflix'
-            tech='React JS'
-
-          />
-          <ProjectItem
-            title='Twitch UI'
-            projectUrl='/twitch'
-            tech='Next JS'
-
-          />
+          <div>
+            <h3 className='text-2xl text-[#5651e5] tracking-wider text-center'>
+              Webscraper
+            </h3>
+            <p className='pb-4 pt-2 text-[#5651e5] text-center'>Python/JS</p>
+            <Link href={project_url}>
+              <p className='text-center py-3 p-3 rounded-lg bg-[#5651e5] text-white font-bold text-lg cursor-pointer'>
+                Link to the project
+              </p>
+            </Link>
+          </div>
+          <div>
+            <h3 className='text-2xl text-[#5651e5] tracking-wider text-center'>
+              Capstone
+            </h3>
+            <p className='pb-4 pt-2 text-[#5651e5] text-center'>Python/JS</p>
+            <Link href={project_url}>
+              <p className='text-center py-3 p-3 rounded-lg bg-[#5651e5] text-white font-bold text-lg cursor-pointer'>
+                Link to the project
+              </p>
+            </Link>
+          </div>
+          
         </div>
       </div>
     </div>
   );
 };
+
 
 export default Projects;

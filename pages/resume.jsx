@@ -68,6 +68,7 @@ const resume = () => {
             <span className='px-2'>|</span>Tailwind
             <span className='px-2'>|</span>MATLAB
             <span className='px-2'>|</span>Bash Shell Scripting
+            <span className='px-2'>|</span>Hugo
           </p>
           <p className='py-2'>
             <span className='font-bold'>Software</span>
@@ -171,7 +172,27 @@ const resume = () => {
         <h5 className='text-center underline text-[18px] py-4'>
           Engineering Projects
         </h5>
-      
+        {/* Capstone Squat Form Corrector */}
+        <div className='py-6'>
+          <p className='italic'>
+            <span className='font-bold'>Capstone - SmartSquat Feedback App</span>
+            <span className='px-2'>|</span>2023
+          </p>
+          <ul className='list-disc list-outside px-7 py-1 leading-relaxed'>
+            <li>
+            Successfully developed a functionnal prediction and assessment application, the SmartSquat Feedback App
+            </li>
+            <li>
+            Played a pivotal role in ingesting and organizing the training dataset for the machine learning algorithm, ensuring the foundation for accurate squat form assessment.
+            </li>
+            <li>
+            Implemented functionality of the application by writing Python code to detect joint positions from video feeds, and designed 
+            an algorithm to evaluate form and performance based on comprehensive research on optimal squatting techniques. 
+            </li>
+            <li>Prepared a live demonstration for the team's presentation and made significant contributions to the final project report, ensuring the project's success.
+            </li>
+          </ul>
+        </div>
         {/* CrowdPleaser */}
         <div className='py-6'>
           <p className='italic'>
