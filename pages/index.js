@@ -8,7 +8,7 @@ export default function Home() {
   const jsonLdData = `
     {
       "@context": "http://schema.org",
-      "@type": "Organization",
+      "@type": "Person",
       "name": "Thierry Jones",
       "logo": "https://www.thierryjones.ca/Logo.png",
       "url": "https://www.thierryjones.ca",
