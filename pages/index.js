@@ -6,17 +6,21 @@ import Skills from '../components/Skills';
 
 export default function Home() {
   const jsonLdData = `
-    {
-      "@context": "http://schema.org",
+  {
+    "@context": "http://schema.org",
+    "@type": "Organization",
+    "name": "Thierry Jones",
+    "url": "https://www.thierryjones.ca",
+    "sameAs": [
+      "https://www.linkedin.com/in/thierry-jones-5106a6172/",
+      "https://github.com/ThierryJones21"
+    ],
+    "founder": {
       "@type": "Person",
-      "name": "Thierry Jones",
-      "logo": "https://www.thierryjones.ca/Logo.png",
-      "url": "https://www.thierryjones.ca",
-      "sameAs": [
-        "https://www.linkedin.com/in/thierry-jones-5106a6172/",
-        "https://github.com/ThierryJones21"
-      ]
+      "name": "Thierry Jones"
     }
+  }
+  
   `;
 
   return (
