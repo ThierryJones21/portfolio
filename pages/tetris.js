@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 const ROWS = 20;
 const COLS = 10;
 const BLOCK_SIZE = 30;
-const MOVE_DOWN_INTERVAL = 1000; // Adjust the interval based on your preference
+const MOVE_DOWN_INTERVAL = 500; // Adjust the interval based on your preference
 
 const Tetris = () => {
   const canvasRef = useRef(null);
