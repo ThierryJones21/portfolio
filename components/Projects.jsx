@@ -27,7 +27,7 @@ const Projects = () => {
               Capstone
             </h3>
             <p className='pb-4 pt-2 text-[#5651e5] text-center'>Python/JS</p>
-            <Link href="">
+            <Link href="/assets/projects/ELEC490_Final_Report_Group_52.pdf">
               <p className='text-center py-3 p-3 rounded-lg bg-[#5651e5] text-white font-bold text-lg cursor-pointer'>
                 Link to the project
               </p>
