@@ -1,14 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { collection, addDoc } from "firebase/firestore";
+import Leaderboard from "./leaderboard";
+import { db } from "./firebase";
 
 const ROWS = 20;
 const COLS = 20;
-const BLOCK_SIZE = 30;
+const BLOCK_SIZE = 20;
 const MOVE_DOWN_INTERVAL = 500;
 
 const Tetris = () => {
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
   const [gameIsResetting, setGameIsResetting] = useState(false);
+  const [username, setUsername] = useState("");
+  const [score, setScore] = useState("")
 
   const tetrominoes = [
     [[1, 1, 1, 1]],
@@ -176,6 +181,7 @@ const Tetris = () => {
   const isGameOver = () => {
     // Check if the current tetromino reaches the top border
     return currentPosition.y <= 0;
+    
   };
   
   
@@ -213,12 +219,16 @@ const Tetris = () => {
   };
 
   const clearRows = () => {
+    let rowsCleared = 0;
     for (let row = ROWS - 1; row >= 0; row--) {
       if (board[row].every((cell) => cell)) {
         board.splice(row, 1);
         board.unshift(Array(COLS).fill(0));
+        rowsCleared++;
       }
     }
+    // Update score based on the number of cleared rows
+    calculateScore(rowsCleared);
   };
 
   const spawnTetromino = () => {
@@ -238,6 +248,20 @@ const Tetris = () => {
     if (!gameIsResetting) {
       moveDown(timestamp);
       requestAnimationFrame(gameLoop);
+    }
+  };
+
+  const saveToLeaderboard = async () => {
+    if (username) {
+      try {
+        const leaderboardRef = collection(db, "user-scores");
+        await addDoc(leaderboardRef, { username, score });
+        console.log("Score saved to leaderboard!");
+      } catch (error) {
+        console.error("Error saving to leaderboard:", error);
+      }
+    } else {
+      alert("Please enter a username before saving your score.");
     }
   };
 
@@ -261,17 +285,36 @@ const Tetris = () => {
   };
 
   const getRandomColor = () => {
-    const colors = ["blue", "red", "green", "yellow", "purple", "orange"];
+    const colors = ["blue", "red", "green", "purple", "orange"];
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
+ 
+
+  const calculateScore = (rowsCleared) => {
+      score = rowsCleared * 100;
+      console.log("Score updated:", score);
+  };
+
   return (
-    <div className="text-center">
-      <canvas
-        ref={canvasRef}
-        tabIndex="0"
-        style={{ border: "1px solid black", display: "inline-block" }}
-      />
+    <div className="tetris-container">
+      <div className="tetris-column">
+        <canvas
+          ref={canvasRef}
+          tabIndex="0"
+          style={{ border: "1px solid black", display: "inline-block" }}
+        />
+        <div>
+          <label>
+            Enter your username:
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+          </label>
+        </div>
+        <button onClick={saveToLeaderboard}>Save Score</button>
+      </div>
+      <div className="tetris-column">
+        <Leaderboard />
+      </div>
     </div>
   );
 };
