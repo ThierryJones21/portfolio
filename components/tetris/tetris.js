@@ -9,16 +9,20 @@ const BLOCK_SIZE = 20;
 const MOVE_DOWN_INTERVAL = 500;
 
 const Tetris = () => {
-
-  // Set all variables before the game starts
-
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
-  const [startGame, setGameStart] = useState(false);
   const [gameIsActive, setGameIsActive] = useState(false);
   const [paused, setIsPaused] = useState(false);
   const [username, setUsername] = useState("");
-  const [score, setScore] = useState("");
+  const [score, setScore] = useState(0);
+  const [gameIsResetting, setGameIsResetting] = useState(false);
+
+
+  let currentTetromino;
+  let currentPosition;
+  let currentTetrominoColor;
+  let lastTimestamp = 0;
+  let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 
   const tetrominoes = [
     [[1, 1, 1, 1]],
@@ -30,44 +34,32 @@ const Tetris = () => {
     [[0, 1, 1, 0], [1, 1]],
   ];
 
-  let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-  let currentTetromino;
-  let currentPosition;
-  let currentTetrominoColor;
-  let lastTimestamp = 0;
-
-  //Runs once game is started is true to make the canvas
-  useEffect(() => {
-    if(startGame){
-      const canvas = canvasRef.current;
-      contextRef.current = canvas.getContext("2d");
-      initGame();
-      window.addEventListener("keydown", handleKeyDown);
-
-      // Set canvas size when the component mounts
-      setCanvasSize();
-
-      // Add resize event listener to update canvas size
-      window.addEventListener("resize", setCanvasSize);
-
-      // Cleanup event listeners on component unmount
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        window.removeEventListener("resize", setCanvasSize);
-      };
-    }
-  }, [startGame]);
-
-   // Inititalize game once called
-   const initGame = () => {
-    setGameIsActive(true)
-    console.log("in initgame")
+  const initGame = () => {
     board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     spawnTetromino();
     gameLoop();
   };
 
-// These functions are only called once setCanvasSize is called #######################
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    contextRef.current = canvas.getContext("2d");
+    
+    window.addEventListener("keydown", handleKeyDown);
+    initGame();
+
+    // Set canvas size when the component mounts
+    setCanvasSize();
+
+    // Add resize event listener to update canvas size
+    window.addEventListener("resize", setCanvasSize);
+
+    // Cleanup event listeners on component unmount
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", setCanvasSize);
+    };
+  }, []);
+
   const setCanvasSize = () => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -86,14 +78,8 @@ const Tetris = () => {
   const draw = () => {
     const context = contextRef.current;
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-  
-    // Draw the game elements only if the game is not over
-    if (!paused) {
-      drawBoard();
-      drawTetromino();
-    } else {
-      drawPauseOverlay();
-    }
+    drawBoard();
+    drawTetromino();
   };
 
   const drawBoard = () => {
@@ -125,10 +111,6 @@ const Tetris = () => {
     context.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
   };
 
-//#######################################################################################
-
-  // Movement functions
-
   const rotateTetromino = () => {
     const rotatedTetromino = currentTetromino[0].map((_, i) =>
       currentTetromino.map((row) => row[i])
@@ -154,7 +136,7 @@ const Tetris = () => {
         clearRows();
         spawnTetromino();
         if (isCollision(currentTetromino, currentPosition)) {
-          setGameIsActive(false);
+          resetGame();
         }
       }
     }
@@ -165,47 +147,44 @@ const Tetris = () => {
   const moveLeft = () => move(-1, 0);
   const moveRight = () => move(1, 0);
   const moveDown = (timestamp) => {
-    if(!paused){
-      const elapsed = timestamp - lastTimestamp;
-    
-      if (elapsed > MOVE_DOWN_INTERVAL) {
-        lastTimestamp = timestamp;
-        const newPosition = { x: currentPosition.x, y: currentPosition.y + 1 };
-    
-        if (!isCollision(currentTetromino, newPosition)) {
-          currentPosition = newPosition;
-        } else {
-          mergeTetromino();
-          clearRows();
-          spawnTetromino();
-    
-          // Check collision with the bottom border
-          if (isCollision(currentTetromino, currentPosition)) {
-            // Move the tetromino up until it's no longer colliding
-            while (isCollision(currentTetromino, currentPosition)) {
-              currentPosition.y--;
-            }
-    
-            // Redraw the board after repositioning the tetromino
-            draw();
-            
-            if (isGameOver()) {
-              setGameIsActive(false);
-            }
+    const elapsed = timestamp - lastTimestamp;
+  
+    if (elapsed > MOVE_DOWN_INTERVAL) {
+      lastTimestamp = timestamp;
+      const newPosition = { x: currentPosition.x, y: currentPosition.y + 1 };
+  
+      if (!isCollision(currentTetromino, newPosition)) {
+        currentPosition = newPosition;
+      } else {
+        mergeTetromino();
+        clearRows();
+        spawnTetromino();
+  
+        // Check collision with the bottom border
+        if (isCollision(currentTetromino, currentPosition)) {
+          // Move the tetromino up until it's no longer colliding
+          while (isCollision(currentTetromino, currentPosition)) {
+            currentPosition.y--;
+          }
+  
+          // Redraw the board after repositioning the tetromino
+          draw();
+          
+          if (isGameOver()) {
+            resetGame();
           }
         }
-    
-        draw();
       }
-    
-      requestAnimationFrame((nextTimestamp) => moveDown(nextTimestamp));
+  
+      draw();
     }
+  
+    requestAnimationFrame((nextTimestamp) => moveDown(nextTimestamp));
   };
   
   const isGameOver = () => {
     // Check if the current tetromino reaches the top border
     return currentPosition.y <= 0;
-    
   };
   
   
@@ -229,11 +208,13 @@ const Tetris = () => {
     return false;
   };
   
+  
+  
+
   const mergeTetromino = () => {
     currentTetromino.forEach((row, i) => {
       row.forEach((cell, j) => {
         if (cell) {
-          // Update the board at the position of the current tetromino with the color of the tetromino once a row is cleared
           board[currentPosition.y + i][currentPosition.x + j] = { color: currentTetrominoColor };
         }
       });
@@ -241,16 +222,12 @@ const Tetris = () => {
   };
 
   const clearRows = () => {
-    let rowsCleared = 0;
     for (let row = ROWS - 1; row >= 0; row--) {
       if (board[row].every((cell) => cell)) {
         board.splice(row, 1);
         board.unshift(Array(COLS).fill(0));
-        rowsCleared++;
       }
     }
-    // Update score based on the number of cleared rows
-    calculateScore(rowsCleared);
   };
 
   const spawnTetromino = () => {
@@ -260,55 +237,38 @@ const Tetris = () => {
     currentTetrominoColor = getRandomColor();
   };
 
-  const gameLoop = (timestamp) => {
-    if (gameIsActive && !paused) {
-      moveDown(timestamp);
-      requestAnimationFrame(gameLoop);
-    } else {
-      // Game is either not active or paused.
-      if (!gameIsActive) {
-        // Additional logic when the game is not active (e.g., game over).
-        console.log("Game over");
-      } else if (paused) {
-        // Additional logic when the game is paused.
-        console.log("Game paused");
-        drawPauseOverlay();
-        
-      }
-    }
+  const resetGame = () => {
+    setGameIsResetting(true);
+    initGame();
+    setGameIsResetting(false);
   };
 
-
+  const gameLoop = (timestamp) => {
+    if (!gameIsResetting) {
+      moveDown(timestamp);
+      requestAnimationFrame(gameLoop);
+    }
+  };
   const startGameFunction = () => {
     setGameStart(true);
     setGameIsActive(true);
-  }
+  };
 
   const pauseGame = () => {
-    if (!gameIsActive) {
+    if (gameIsActive && !paused) {
       setIsPaused(true);
+      console.log("game paused");
     } else {
       setIsPaused(false);
+      console.log("game unpaused");
     }
   };
 
-  const restartGame = () => {
-    setIsPaused(false);
-    setUsername("");
-    setScore("");
-    setGameIsActive(true); 
-    for (let i = 0; i < ROWS; i++) {
-      for (let j = 0; j < COLS; j++) {
-        board[i][j] = 0;
-      }
-    }
-    initGame();
-  };
-  
-  
-// Other misc fucntions for leaderboard and color randomization  
+  useEffect(() => {
+    console.log("Updated paused state:", paused);
+  }, [paused]);
 
-const handleKeyDown = (event) => {
+  const handleKeyDown = (event) => {
     switch (event.code) {
       case "ArrowUp":
         rotateTetromino();
@@ -329,9 +289,10 @@ const handleKeyDown = (event) => {
 
   const drawPauseOverlay = () => {
     const context = contextRef.current;
-    context.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent black
+    context.fillStyle = "rgba(0, 0, 0, 0.5)";
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
-  }
+  };
+
   const getRandomColor = () => {
     const colors = ["blue", "red", "green", "purple", "orange"];
     return colors[Math.floor(Math.random() * colors.length)];
@@ -351,13 +312,11 @@ const handleKeyDown = (event) => {
     }
   };
 
-
   const calculateScore = (rowsCleared) => {
-    score = rowsCleared * 100;
-    setScore(score)
+    const newScore = rowsCleared * 100;
+    setScore((prevScore) => prevScore + newScore);
     console.log("Score updated:", score);
   };
-
 
   return (
     <div className="tetris-container">
@@ -370,18 +329,21 @@ const handleKeyDown = (event) => {
         <div>
           <label>
             Enter your username:
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </label>
         </div>
-        {/* Display the score here */}
         <p>Score: {score}</p>
         <button onClick={saveToLeaderboard}>Save Score</button>
       </div>
-      
+
       <div className="tetris-column">
         <button onClick={startGameFunction}>Start Game</button>
         <button onClick={pauseGame}>Pause Game</button>
-        <button onClick={restartGame}>Restart Game</button>
+        <button onClick={resetGame}>Restart Game</button>
         <Leaderboard />
       </div>
     </div>
