@@ -3,17 +3,18 @@ import { collection, addDoc, getDocs, updateDoc } from "firebase/firestore";
 import Leaderboard from "./leaderboard";
 import { db } from "./firebase";
 
-const ROWS = 20;
-const COLS = 20;
+const ROWS = 18;
+const COLS = 12;
 const BLOCK_SIZE = 20;
 const MOVE_DOWN_INTERVAL = 500;
 
 const Tetris = () => {
-  const canvasRef = useRef(null);
-  const contextRef = useRef(null);
-  const [username, setUsername] = useState("");
-  const [score, setScore] = useState(0);
-  const [gameIsResetting, setGameIsResetting] = useState(false);
+  let canvasRef = useRef(null);
+  let contextRef = useRef(null);
+  let [username, setUsername] = useState("");
+  let [score, setScore] = useState(0);
+  let [active, setGameIsActive] = useState(false);
+  let [resetCheck, setGameReset] = useState(false);
 
 
   let currentTetromino;
@@ -33,15 +34,15 @@ const Tetris = () => {
   ];
 
   const initGame = () => {
-    setUsername("");
+    // make sure to set game is active here in case someone resets during a game
+    setGameIsActive(true);
     setScore(0);
-    setGameIsResetting(false);
-  
     currentTetromino = null;
     currentPosition = null;
     currentTetrominoColor = null;
     lastTimestamp = 0;
     board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    console.log(score + "score after init")
     spawnTetromino();
     gameLoop();
   };
@@ -51,7 +52,9 @@ const Tetris = () => {
     contextRef.current = canvas.getContext("2d");
     
     window.addEventListener("keydown", handleKeyDown);
-    initGame();
+    if(active){
+      initGame();
+    }
 
     // Set canvas size when the component mounts
     setCanvasSize();
@@ -64,7 +67,7 @@ const Tetris = () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", setCanvasSize);
     };
-  }, []);
+  }, [active]);
 
   const setCanvasSize = () => {
     const canvas = canvasRef.current;
@@ -83,6 +86,8 @@ const Tetris = () => {
 
   const draw = () => {
     const context = contextRef.current;
+
+
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     drawBoard();
     drawTetromino();
@@ -142,7 +147,10 @@ const Tetris = () => {
         clearRows();
         spawnTetromino();
         if (isCollision(currentTetromino, currentPosition)) {
-          resetGame();
+          console.log("gameover");
+          //setGameIsActive(false);
+          //reseting for now but will work on game over function
+          startResetGame();
         }
       }
     }
@@ -153,41 +161,45 @@ const Tetris = () => {
   const moveLeft = () => move(-1, 0);
   const moveRight = () => move(1, 0);
   const moveDown = (timestamp) => {
-    const elapsed = timestamp - lastTimestamp;
-  
-    if (elapsed > MOVE_DOWN_INTERVAL) {
-      lastTimestamp = timestamp;
-      const newPosition = { x: currentPosition.x, y: currentPosition.y + 1 };
-  
-      if (!isCollision(currentTetromino, newPosition)) {
-        currentPosition = newPosition;
-      } else {
-        mergeTetromino();
-        clearRows();
-        spawnTetromino();
-  
-        // Check collision with the bottom border
-        if (isCollision(currentTetromino, currentPosition)) {
-          // Move the tetromino up until it's no longer colliding
-          while (isCollision(currentTetromino, currentPosition)) {
-            currentPosition.y--;
-          }
-  
-          // Redraw the board after repositioning the tetromino
-          draw();
+    if(active && !resetCheck){
+            setGameReset(false);
+            const elapsed = timestamp - lastTimestamp;
           
-          if (currentPosition.y <= 0) {
-            calculateScore();
-            console.log("gameover")
-            resetGame();
-          }
-        }
-      }
-  
-      draw();
+            if (elapsed > MOVE_DOWN_INTERVAL) {
+              lastTimestamp = timestamp;
+              const newPosition = { x: currentPosition.x, y: currentPosition.y + 1 };
+          
+              if (!isCollision(currentTetromino, newPosition)) {
+                currentPosition = newPosition;
+              } else {
+                mergeTetromino();
+                clearRows();
+                spawnTetromino();
+          
+                // Check collision with the bottom border
+                if (isCollision(currentTetromino, currentPosition)) {
+                  // Move the tetromino up until it's no longer colliding
+                  while (isCollision(currentTetromino, currentPosition)) {
+                    currentPosition.y--;
+                  }
+          
+                  // Redraw the board after repositioning the tetromino
+                  draw();
+                  
+                  if (currentPosition.y <= 0) {
+                    console.log("gameover");
+                    //setGameIsActive(false);
+                    //reseting for now but will work on game over function
+                    startResetGame();
+                  }
+                }
+              }
+          
+              draw();
+            }
+          
+            requestAnimationFrame((nextTimestamp) => moveDown(nextTimestamp));
     }
-  
-    requestAnimationFrame((nextTimestamp) => moveDown(nextTimestamp));
   };
   
   
@@ -210,9 +222,6 @@ const Tetris = () => {
     return false;
   };
   
-  
-  
-
   const mergeTetromino = () => {
     currentTetromino.forEach((row, i) => {
       row.forEach((cell, j) => {
@@ -223,10 +232,15 @@ const Tetris = () => {
     });
   };
 
+  const calculateScore = () => {
+    setScore((prevScore) => prevScore + 100);
+    console.log("Score updated:", score);
+  };
+
   const clearRows = () => {
     for (let row = ROWS - 1; row >= 0; row--) {
       if (board[row].every((cell) => cell)) {
-        setScore((score) => score + 100);
+        calculateScore();
         board.splice(row, 1);
         board.unshift(Array(COLS).fill(0));
       }
@@ -240,32 +254,44 @@ const Tetris = () => {
     currentTetrominoColor = getRandomColor();
   };
 
-  const resetGame = () => {
-    setGameIsResetting(true);
-    initGame();
-  };
-
-  const gameLoop = (timestamp) => {
-    if (!gameIsResetting) {
-      moveDown(timestamp);
-      requestAnimationFrame(gameLoop);
+  const startResetGame = () => {
+    if (username.trim() !== "") {
+      initGame();
+    } else {
+      alert("Please enter a username before starting the game.");
     }
   };
 
+  const gameLoop = (timestamp) => {
+    moveDown(timestamp);
+    requestAnimationFrame(gameLoop);
+  };
+  
   const handleKeyDown = (event) => {
     switch (event.code) {
       case "ArrowUp":
-        rotateTetromino();
-        break;
+        if(active){
+          rotateTetromino();
+          break;
+        }
       case "ArrowDown":
-        move(0, 1);
-        break;
+        if(active){
+          move(0, 1);
+          break;
+        }
       case "ArrowLeft":
-        moveLeft();
-        break;
+        if (active){
+          moveLeft();
+          break;
+        }
       case "ArrowRight":
-        moveRight();
-        break;
+        if(active){
+          moveRight();
+          break;
+        }
+      // case "KeyS":
+      //   setGameIsActive(true);
+      //   console.log("startgame")
       default:
         break;
     }
@@ -292,10 +318,10 @@ const Tetris = () => {
             if (score > data.score) {
               // Only update if the new score is higher
               await updateDoc(docRef, { score });
-              console.log("Score updated in leaderboard!");
+              alert("Score updated in leaderboard!");
             }
             else{
-              console.log("score is lower not added")
+              alert("score is lower not added")
             }
           }
         });
@@ -303,7 +329,7 @@ const Tetris = () => {
         // If the user doesn't exist, add a new document
         if (!userExists) {
           await addDoc(leaderboardRef, { username, score });
-          console.log("Score saved to leaderboard!");
+          alert("Score saved to leaderboard! refresh site to check new leaderboard");
         }
       } catch (error) {
         console.error("Error saving to leaderboard:", error);
@@ -312,39 +338,41 @@ const Tetris = () => {
       alert("Please enter a username before saving your score.");
     }
   };
-  
 
-  const calculateScore = async (rowsCleared) => {
-    const newScore = rowsCleared * 100;
-    setScore((prevScore) => prevScore + newScore);
-    console.log("Score updated:", score);
-  };
 
   return (
-    <div className="tetris-container">
-      <div className="tetris-column">
-        <canvas
-          ref={canvasRef}
-          tabIndex="0"
-          style={{ border: "1px solid black", display: "inline-block" }}
-        />
-        <div>
-          <label>
-            Enter your username:
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </label>
+    <div>
+      <h4 className="text-2xl font-bold mb-4">Enter a username:
+      <label> &nbsp;
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => {
+              if (!active) {
+                setUsername(e.target.value);
+              }
+            }}
+            disabled={active} // Disable the input field if the game has started
+            style={{ width: "200px" }}
+          />
+        </label> and &nbsp; 
+            <button onClick={startResetGame}> start/restart</button>
+      </h4>
+      <div className="tetris-container">
+        <div className="tetris-column">
+          <canvas
+            ref={canvasRef}
+            tabIndex="0"
+            style={{ border: "1px solid black", display: "inline-block" }}
+          />
+          <p>Score: {score}</p>
+          <button onClick={saveToLeaderboard}>Save Score</button>
         </div>
-        <p>Score: {score}</p>
-        <button onClick={saveToLeaderboard}>Save Score</button>
-      </div>
 
-      <div className="tetris-column">
-        <button onClick={resetGame}>Restart Game</button>
-        <Leaderboard />
+        <div className="tetris-column">
+          
+          <Leaderboard />
+        </div>
       </div>
     </div>
   );
