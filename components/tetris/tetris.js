@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, updateDoc } from "firebase/firestore";
 import Leaderboard from "./leaderboard";
 import { db } from "./firebase";
 
@@ -11,8 +11,6 @@ const MOVE_DOWN_INTERVAL = 500;
 const Tetris = () => {
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
-  const [gameIsActive, setGameIsActive] = useState(false);
-  const [paused, setIsPaused] = useState(false);
   const [username, setUsername] = useState("");
   const [score, setScore] = useState(0);
   const [gameIsResetting, setGameIsResetting] = useState(false);
@@ -35,6 +33,14 @@ const Tetris = () => {
   ];
 
   const initGame = () => {
+    setUsername("");
+    setScore(0);
+    setGameIsResetting(false);
+  
+    currentTetromino = null;
+    currentPosition = null;
+    currentTetrominoColor = null;
+    lastTimestamp = 0;
     board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     spawnTetromino();
     gameLoop();
@@ -170,7 +176,9 @@ const Tetris = () => {
           // Redraw the board after repositioning the tetromino
           draw();
           
-          if (isGameOver()) {
+          if (currentPosition.y <= 0) {
+            calculateScore();
+            console.log("gameover")
             resetGame();
           }
         }
@@ -181,12 +189,6 @@ const Tetris = () => {
   
     requestAnimationFrame((nextTimestamp) => moveDown(nextTimestamp));
   };
-  
-  const isGameOver = () => {
-    // Check if the current tetromino reaches the top border
-    return currentPosition.y <= 0;
-  };
-  
   
   
   const isCollision = (tetromino, position) => {
@@ -224,6 +226,7 @@ const Tetris = () => {
   const clearRows = () => {
     for (let row = ROWS - 1; row >= 0; row--) {
       if (board[row].every((cell) => cell)) {
+        setScore((score) => score + 100);
         board.splice(row, 1);
         board.unshift(Array(COLS).fill(0));
       }
@@ -240,7 +243,6 @@ const Tetris = () => {
   const resetGame = () => {
     setGameIsResetting(true);
     initGame();
-    setGameIsResetting(false);
   };
 
   const gameLoop = (timestamp) => {
@@ -249,24 +251,6 @@ const Tetris = () => {
       requestAnimationFrame(gameLoop);
     }
   };
-  const startGameFunction = () => {
-    setGameStart(true);
-    setGameIsActive(true);
-  };
-
-  const pauseGame = () => {
-    if (gameIsActive && !paused) {
-      setIsPaused(true);
-      console.log("game paused");
-    } else {
-      setIsPaused(false);
-      console.log("game unpaused");
-    }
-  };
-
-  useEffect(() => {
-    console.log("Updated paused state:", paused);
-  }, [paused]);
 
   const handleKeyDown = (event) => {
     switch (event.code) {
@@ -287,12 +271,6 @@ const Tetris = () => {
     }
   };
 
-  const drawPauseOverlay = () => {
-    const context = contextRef.current;
-    context.fillStyle = "rgba(0, 0, 0, 0.5)";
-    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
-  };
-
   const getRandomColor = () => {
     const colors = ["blue", "red", "green", "purple", "orange"];
     return colors[Math.floor(Math.random() * colors.length)];
@@ -302,8 +280,31 @@ const Tetris = () => {
     if (username) {
       try {
         const leaderboardRef = collection(db, "user-scores");
-        await addDoc(leaderboardRef, { username, score });
-        console.log("Score saved to leaderboard!");
+        const querySnapshot = await getDocs(leaderboardRef);
+  
+        let userExists = false;
+        querySnapshot.forEach(async (doc) => {
+          const data = doc.data();
+          if (data.username === username) {
+            userExists = true;
+            // If the user already exists, update their score
+            const docRef = doc.ref;
+            if (score > data.score) {
+              // Only update if the new score is higher
+              await updateDoc(docRef, { score });
+              console.log("Score updated in leaderboard!");
+            }
+            else{
+              console.log("score is lower not added")
+            }
+          }
+        });
+  
+        // If the user doesn't exist, add a new document
+        if (!userExists) {
+          await addDoc(leaderboardRef, { username, score });
+          console.log("Score saved to leaderboard!");
+        }
       } catch (error) {
         console.error("Error saving to leaderboard:", error);
       }
@@ -311,8 +312,9 @@ const Tetris = () => {
       alert("Please enter a username before saving your score.");
     }
   };
+  
 
-  const calculateScore = (rowsCleared) => {
+  const calculateScore = async (rowsCleared) => {
     const newScore = rowsCleared * 100;
     setScore((prevScore) => prevScore + newScore);
     console.log("Score updated:", score);
@@ -341,8 +343,6 @@ const Tetris = () => {
       </div>
 
       <div className="tetris-column">
-        <button onClick={startGameFunction}>Start Game</button>
-        <button onClick={pauseGame}>Pause Game</button>
         <button onClick={resetGame}>Restart Game</button>
         <Leaderboard />
       </div>
