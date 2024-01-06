@@ -16,7 +16,7 @@ const Projects = () => {
               Tetris
             </h3>
             <p className='pb-4 pt-2 text-[#5651e5] text-center'>JavaScript</p>
-            <Link href="/tetris">
+            <Link href="https://react-tetris-app.vercel.app">
               <p className='text-center py-3 p-3 rounded-lg bg-[#5651e5] text-white font-bold text-lg cursor-pointer'>
                 Link to the project
               </p>
